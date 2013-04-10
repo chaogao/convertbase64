@@ -23,31 +23,33 @@ package
 			}
 		}
 		
-		private function getImage(value:String):void{
+		private function getImage(value:String, index:int):void {
 			var lc:LoaderContext = new LoaderContext(true);
 			var loader:Loader = new Loader();
 			loader.load(new URLRequest(value),lc);
-			loader.contentLoaderInfo.addEventListener(Event.COMPLETE,loadComplete);
+			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, createcb(index));
 		}
 		
-		private function loadedFn(value:String):void{
+		private function loadedFn(value:String, index: int):void{
 			if(ExternalInterface.available){
 				var param:Object = root.loaderInfo.parameters;
 				var loadedFn:String = "Imageloaded";
 				if(param && param['loaded']){
 					loadedFn = param['loaded'];
 				}
-				ExternalInterface.call(loadedFn,value);  //这里就是给每次的loadsuccess触发的js的函数的回调，这里属于注册行为？总之call了一个js的函数，然后把as里的data反给了js，js在函数里就直接可以用鸟。。
+				ExternalInterface.call(loadedFn,value, index);  //这里就是给每次的loadsuccess触发的js的函数的回调，这里属于注册行为？总之call了一个js的函数，然后把as里的data反给了js，js在函数里就直接可以用鸟。。
 			}
 		}
 		
-		private function loadComplete(event:Event):void{
-			var bitmap:Bitmap = event.target.content as Bitmap; //把这个货回传回去，图片高宽大小等信息居然在firebug里都可以打出来……
-			var pngStream:ByteArray=(new PNGEncoder).encode(bitmap.bitmapData);
-			var base64Enc:Base64Encoder = new Base64Encoder();
-			base64Enc.encodeBytes(pngStream);
-			var base64Str:String = base64Enc.toString();
-			loadedFn(base64Str); //各种转换之后得到base64的字符串结果
+		private function createcb(index: int):Function {
+			return function(event:Event):void {
+				var bitmap:Bitmap = event.target.content as Bitmap; //把这个货回传回去，图片高宽大小等信息居然在firebug里都可以打出来……
+				var pngStream:ByteArray=(new PNGEncoder).encode(bitmap.bitmapData);
+				var base64Enc:Base64Encoder = new Base64Encoder();
+				base64Enc.encodeBytes(pngStream);
+				var base64Str:String = base64Enc.toString();
+				loadedFn(base64Str, index); //各种转换之后得到base64的字符串结果
+			}
 		}
 	}
 }
